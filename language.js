@@ -88,7 +88,6 @@ async function translateText(text, targetLang) {
     let data = await response.json();
     return data.translatedText;
 }
-
 document.addEventListener("DOMContentLoaded", function() {
     // Select the first language link
     var firstLang = document.querySelector(".FN_Lang-Selector-Link");
