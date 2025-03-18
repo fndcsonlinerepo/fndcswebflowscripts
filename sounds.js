@@ -1,25 +1,24 @@
 $(document).ready(function() {
-  // Make sure Howler is loaded before accessing it
+  // Make sure Howler is loaded before proceeding
   if (typeof Howler === 'undefined') {
     console.error('Howler.js is not loaded. Please include the Howler library before this script.');
     return;
   }
-
-  // Create an AudioContext and force it to be active
-  let audioContext = Howler.ctx;
   
+  // Check for AudioContext safely
   function unlockAudioContext() {
-    if (audioContext && audioContext.state === "suspended") {
-      audioContext.resume().then(() => {
+    // Only try to access ctx if Howler exists and has a ctx property
+    if (Howler && Howler.ctx && Howler.ctx.state === "suspended") {
+      Howler.ctx.resume().then(() => {
         console.log("Audio Context Unlocked Automatically!");
       });
     }
   }
   
-  // Try unlocking immediately when the page loads
-  unlockAudioContext();
+  // Wait a short time before trying to unlock - gives Howler time to initialize
+  setTimeout(unlockAudioContext, 100);
   
-  // Also unlock audio on first user interaction (required by some browsers)
+  // Also unlock audio on first user interaction (required by most browsers)
   $(document).one('click touchstart', function() {
     unlockAudioContext();
   });
@@ -49,7 +48,7 @@ $(document).ready(function() {
   // Keep track of sound IDs to stop specific instances
   let currentHoverSoundId = null;
   
-  // Ensure hover sound plays immediately
+  // Ensure hover sound plays immediately - use delegation for dynamic elements
   $(document).on("mouseenter", "a, button", function() {
     currentHoverSoundId = hoverSound.play();
   });
@@ -66,17 +65,15 @@ $(document).ready(function() {
     const navbar = document.querySelector('.navbar-menu_component');
     
     if (!navbar) {
-      console.error('Navbar element not found. Check your selector.');
+      console.warn('Navbar element not found. Check your selector.');
       return;
     }
     
     if (navbar.classList.contains('open')) {
       closeSound.play();
-      // No need to wait for sound to finish before toggling menu
       navbar.classList.remove('open');
     } else {
       openSound.play();
-      // No need to wait for sound to finish before toggling menu
       navbar.classList.add('open');
     }
   }
@@ -86,4 +83,3 @@ $(document).ready(function() {
     toggleNavbar();
   });
 });
-
