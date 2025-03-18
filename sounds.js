@@ -1,60 +1,64 @@
 $(document).ready(function() {
-  // Make sure Howler is loaded before proceeding
+  // Check if Howler is available
   if (typeof Howler === 'undefined') {
     console.error('Howler.js is not loaded. Please include the Howler library before this script.');
     return;
   }
   
-  // Check for AudioContext safely
-  function unlockAudioContext() {
-    // Only try to access ctx if Howler exists and has a ctx property
-    if (Howler && Howler.ctx && Howler.ctx.state === "suspended") {
-      Howler.ctx.resume().then(() => {
-        console.log("Audio Context Unlocked Automatically!");
-      });
-    }
+  // Initialize sounds AFTER checking for Howler
+  let hoverSound, openSound, closeSound;
+  let currentHoverSoundId = null;
+  let audioInitialized = false;
+  
+  // Function to initialize audio - we'll call this on first user interaction
+  function initializeAudio() {
+    // Only initialize once
+    if (audioInitialized) return;
+    audioInitialized = true;
+    
+    // Initialize sounds
+    hoverSound = new Howl({
+      src: ["https://cdn.jsdelivr.net/gh/fndcsonlinerepo/Audio-Host/sound2.mp3"],
+      volume: 0.3,
+      preload: true,
+      html5: true
+    });
+    
+    openSound = new Howl({
+      src: ["https://cdn.jsdelivr.net/gh/fndcsonlinerepo/Audio-Host/open1.mp3"],
+      volume: 0.6,
+      preload: true,
+      html5: true
+    });
+    
+    closeSound = new Howl({
+      src: ["https://cdn.jsdelivr.net/gh/fndcsonlinerepo/Audio-Host/close.mp3"],
+      volume: 0.6,
+      preload: true,
+      html5: true
+    });
+    
+    console.log("Audio initialized successfully");
   }
   
-  // Wait a short time before trying to unlock - gives Howler time to initialize
-  setTimeout(unlockAudioContext, 100);
-  
-  // Also unlock audio on first user interaction (required by most browsers)
+  // Initialize audio on first user interaction
   $(document).one('click touchstart', function() {
-    unlockAudioContext();
+    initializeAudio();
   });
   
-  // Preload sounds
-  const hoverSound = new Howl({
-    src: ["https://cdn.jsdelivr.net/gh/fndcsonlinerepo/Audio-Host/sound2.mp3"],
-    volume: 0.3,
-    preload: true,
-    html5: true // Better mobile compatibility
-  });
-  
-  const openSound = new Howl({
-    src: ["https://cdn.jsdelivr.net/gh/fndcsonlinerepo/Audio-Host/open1.mp3"],
-    volume: 0.6,
-    preload: true,
-    html5: true
-  });
-  
-  const closeSound = new Howl({
-    src: ["https://cdn.jsdelivr.net/gh/fndcsonlinerepo/Audio-Host/close.mp3"],
-    volume: 0.6,
-    preload: true,
-    html5: true
-  });
-  
-  // Keep track of sound IDs to stop specific instances
-  let currentHoverSoundId = null;
-  
-  // Ensure hover sound plays immediately - use delegation for dynamic elements
+  // Handle hover sound
   $(document).on("mouseenter", "a, button", function() {
-    currentHoverSoundId = hoverSound.play();
+    if (!audioInitialized) {
+      initializeAudio();
+    }
+    
+    if (hoverSound) {
+      currentHoverSoundId = hoverSound.play();
+    }
   });
   
   $(document).on("mouseleave", "a, button", function() {
-    if (currentHoverSoundId !== null) {
+    if (hoverSound && currentHoverSoundId !== null) {
       hoverSound.stop(currentHoverSoundId);
       currentHoverSoundId = null;
     }
@@ -69,11 +73,15 @@ $(document).ready(function() {
       return;
     }
     
+    if (!audioInitialized) {
+      initializeAudio();
+    }
+    
     if (navbar.classList.contains('open')) {
-      closeSound.play();
+      if (closeSound) closeSound.play();
       navbar.classList.remove('open');
     } else {
-      openSound.play();
+      if (openSound) openSound.play();
       navbar.classList.add('open');
     }
   }
